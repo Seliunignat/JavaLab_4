@@ -1,3 +1,5 @@
+package bsu.rfe.java.group10.lab4.SELIUN.var3C;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
