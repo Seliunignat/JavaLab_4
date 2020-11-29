@@ -196,12 +196,22 @@ public class GraphicsDisplay extends JPanel
         // Шаг 1 - Установить специальное перо для черчения контуров маркеров
         canvas.setStroke(markerStroke);
         // Выбрать красный цвета для контуров маркеров
-        canvas.setColor(Color.BLACK);
+        canvas.setColor(Color.RED);
         // Выбрать красный цвет для закрашивания маркеров внутри
-        canvas.setPaint(Color.BLACK);
+        canvas.setPaint(Color.RED);
         // Шаг 2 - Организовать цикл по всем точкам графика
         for (Double[] point: graphicsData) {
             // Инициализировать эллипс как объект для представления маркера
+            if(SumOfNumbersInCeilPartOfPointLowerThanTEN(point[1]))
+            {
+                System.out.println(point[1] + ": " + true);
+                canvas.setColor(Color.BLUE);
+            }
+            else
+            {
+                System.out.println(point[1] + ": " + false);
+                canvas.setColor(Color.RED);
+            }
             Ellipse2D.Double marker = new Ellipse2D.Double();
             Line2D.Double lineVertical = new Line2D.Double();
             Line2D.Double lineHorizontal = new Line2D.Double();
@@ -220,6 +230,32 @@ public class GraphicsDisplay extends JPanel
             canvas.draw(lineVertical);
             //canvas.fill(marker); // Залить внутреннюю область маркера
         }
+    }
+
+    private boolean SumOfNumbersInCeilPartOfPointLowerThanTEN(Double number) {
+        Double numberCeil = Math.abs(Math.ceil(number));
+        if((Double)numberCeil - number != 0)
+        {
+            numberCeil -= 1;
+        }
+        int sum = 0;
+        if(numberCeil < 10)
+        {
+            return true;
+        }
+        else if(numberCeil >= 10)
+        {
+            while(numberCeil.intValue() > 0)
+            {
+                sum += numberCeil%10;
+                numberCeil /= 10;
+            }
+            if(sum < 10)
+                return true;
+            else
+                return false;
+        }
+        return false;
     }
 
     public void paintComponent(Graphics g) {

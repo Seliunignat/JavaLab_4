@@ -132,7 +132,7 @@ public class MainFrame extends JFrame{
                 Double y = in.readDouble();
                 // Прочитанная пара координат добавляется в массив
                 graphicsData[i++] = new Double[] {x, y};
-                System.out.println("X: " + x + "\tY: " + y);
+                //System.out.println("X: " + x + "\tY: " + y);
             }
             // Шаг 4 - Проверка, имеется ли в списке в результате чтения
             // хотя бы одна пара координат
