@@ -14,9 +14,12 @@ public class GraphicsDisplay extends JPanel
     private BasicStroke axisStroke;
     private BasicStroke graphicsStroke;
     private BasicStroke markerStroke;
+    private BasicStroke graphicsStroke2;
+    private BasicStroke markerStroke2;
 
     // Список координат точек для построения графика
     private Double[][] graphicsData;
+    private Double[][] graphicsData2 = null;
 
     // Границы диапазона пространства, подлежащего отображению
     private double maxX;
@@ -57,8 +60,17 @@ public class GraphicsDisplay extends JPanel
         // Перо для рисования контуров маркеров
         markerStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
                 BasicStroke.JOIN_ROUND, 10.0f, null, 0.0f);
+
+        // Перо для рисования второго графика
+        graphicsStroke2 = new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_ROUND, 10.0f, null, 0.0f);
+        // Перо для рисования контуров маркеров второго графика
+        markerStroke2 = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_ROUND, 10.0f, null, 0.0f);
         // Шрифт для подписей осей координат
         axisFont = new Font("Serif", Font.BOLD, 36);
+
+        graphicsData2 = new Double[][]{};
     }
 
     // Метод вызывается из обработчика элемента меню "Открыть файл с графиком"
@@ -67,6 +79,11 @@ public class GraphicsDisplay extends JPanel
         // Сохранить массив точек во внутреннем поле класса
         this.graphicsData = graphicsData;
         // Запросить перерисовку компонента (неявно вызвать paintComponent())
+        repaint();
+    }
+
+    public void addNewAndShowGraphics(Double[][] secondGraphicsData) {
+        this.graphicsData2 = secondGraphicsData;
         repaint();
     }
 
@@ -110,6 +127,29 @@ public class GraphicsDisplay extends JPanel
         }
         // Отобразить график
         canvas.draw(graphics);
+
+        //Рисуем вторую функцию
+        canvas.setStroke(graphicsStroke2);
+        // Выбрать цвет линии
+        canvas.setColor(Color.ORANGE);
+        /* Будем рисовать линию графика как путь, состоящий из множества
+        сегментов (GeneralPath). Начало пути устанавливается в первую точку
+        графика, после чего прямой соединяется со следующими точками */
+        GeneralPath SecondGraphics = new GeneralPath();
+        for (int i=0; i<graphicsData2.length; i++) {
+            // Преобразовать значения (x,y) в точку на экране point
+            Point2D.Double point = xyToPoint(graphicsData2[i][0],
+                    graphicsData2[i][1]);
+            if (i>0) {
+                // Не первая итерация – вести линию в точку point
+                SecondGraphics.lineTo(point.getX(), point.getY());
+            } else {
+                // Первая итерация - установить начало пути в точку point
+                SecondGraphics.moveTo(point.getX(), point.getY());
+            }
+        }
+        // Отобразить график
+        canvas.draw(SecondGraphics);
     }
 
     protected void paintAxis(Graphics2D canvas) {
@@ -200,16 +240,13 @@ public class GraphicsDisplay extends JPanel
         // Выбрать красный цвет для закрашивания маркеров внутри
         canvas.setPaint(Color.RED);
         // Шаг 2 - Организовать цикл по всем точкам графика
-        for (Double[] point: graphicsData) {
+        for (Double[] point : graphicsData) {
             // Инициализировать эллипс как объект для представления маркера
-            if(SumOfNumbersInCeilPartOfPointLowerThanTEN(point[1]))
-            {
-                System.out.println(point[1] + ": " + true);
+            if (SumOfNumbersInCeilPartOfPointLowerThanTEN(point[1])) {
+                //System.out.println(point[1] + ": " + true);
                 canvas.setColor(Color.BLUE);
-            }
-            else
-            {
-                System.out.println(point[1] + ": " + false);
+            } else {
+                //System.out.println(point[1] + ": " + false);
                 canvas.setColor(Color.RED);
             }
             Ellipse2D.Double marker = new Ellipse2D.Double();
@@ -228,7 +265,41 @@ public class GraphicsDisplay extends JPanel
             canvas.draw(marker); // Начертить контур маркера
             canvas.draw(lineHorizontal);
             canvas.draw(lineVertical);
-            //canvas.fill(marker); // Залить внутреннюю область маркера
+
+            //ВТОРОЙ ГРАФИК
+            // Шаг 1 - Установить специальное перо для черчения контуров маркеров
+            canvas.setStroke(markerStroke2);
+            // Выбрать красный цвета для контуров маркеров
+            canvas.setColor(Color.RED);
+            // Выбрать красный цвет для закрашивания маркеров внутри
+            canvas.setPaint(Color.RED);
+            // Шаг 2 - Организовать цикл по всем точкам графика
+            for (Double[] point2 : graphicsData2) {
+                // Инициализировать эллипс как объект для представления маркера
+                if (SumOfNumbersInCeilPartOfPointLowerThanTEN(point2[1])) {
+                    //System.out.println(point2[1] + ": " + true);
+                    canvas.setColor(Color.BLUE);
+                } else {
+                    //System.out.println(point2[1] + ": " + false);
+                    canvas.setColor(Color.RED);
+                }
+                Ellipse2D.Double marker2 = new Ellipse2D.Double();
+                Line2D.Double lineVertical2 = new Line2D.Double();
+                Line2D.Double lineHorizontal2 = new Line2D.Double();
+            /* Эллипс будет задаваться посредством указания координат его
+            центра и угла прямоугольника, в который он вписан */
+                // Центр - в точке (x,y)
+                center = xyToPoint(point2[0], point2[1]);
+                // Угол прямоугольника - отстоит на расстоянии (3,3)
+                corner = shiftPoint(center, 5.5, 5.5);
+                lineVertical2.setLine(center.getX(), center.getY() - 5.5, center.getX(), center.getY() + 5.5);
+                lineHorizontal2.setLine(center.getX() - 5.5, center.getY(), center.getX() + 5.5, center.getY());
+                // Задать эллипс по центру и диагонали
+                marker2.setFrameFromCenter(center, corner);
+                canvas.draw(marker2); // Начертить контур маркера
+                canvas.draw(lineHorizontal2);
+                canvas.draw(lineVertical2);
+            }
         }
     }
 
@@ -280,6 +351,15 @@ public class GraphicsDisplay extends JPanel
             }
             if (graphicsData[i][1]>maxY) {
                 maxY = graphicsData[i][1];
+            }
+        }
+        //Смотрим из данных второго графика
+        for (int i = 0; i<graphicsData2.length; i++) {
+            if (graphicsData2[i][1] < minY) {
+                minY = graphicsData2[i][1];
+            }
+            if (graphicsData2[i][1]>maxY) {
+                maxY = graphicsData2[i][1];
             }
         }
         /* Шаг 4 - Определить (исходя из размеров окна) масштабы по осям X и Y –

@@ -17,10 +17,12 @@ public class MainFrame extends JFrame{
     // Пункты меню
     private JCheckBoxMenuItem showAxisMenuItem;
     private JCheckBoxMenuItem showMarkersMenuItem;
+    private JMenuItem addGraphicsMenuItem;
     // Компонент-отображатель графика
     private GraphicsDisplay display = new GraphicsDisplay();
     // Флаг, указывающий на загруженность данных графика
     private boolean fileLoaded = false;
+    private int amountOfLoadedGraphics = 0;
 
     // Класс-слушатель событий, связанных с отображением меню
     private class GraphicsMenuListener implements MenuListener {
@@ -29,6 +31,10 @@ public class MainFrame extends JFrame{
         // Доступность или недоступность элементов меню "График" определяется загруженностью данных
             showAxisMenuItem.setEnabled(fileLoaded);
             showMarkersMenuItem.setEnabled(fileLoaded);
+            if(amountOfLoadedGraphics > 0 && amountOfLoadedGraphics < 2)
+                addGraphicsMenuItem.setEnabled(true);
+            else
+                addGraphicsMenuItem.setEnabled(false);
         }
         // Обработчик, вызываемый после того, как меню исчезло с экрана
         public void menuDeselected(MenuEvent e) {
@@ -65,7 +71,8 @@ public class MainFrame extends JFrame{
                     fileChooser.setCurrentDirectory(new File("."));
                 }
                 if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
-                    openGraphics(fileChooser.getSelectedFile());
+                    openGraphics(fileChooser.getSelectedFile(), "СОЗДАНИЕ ГРАФИКА");
+                addGraphicsMenuItem.setEnabled(true);
             }
         };
         // Добавить соответствующий элемент меню
@@ -91,7 +98,6 @@ public class MainFrame extends JFrame{
         // Элемент по умолчанию включен (отмечен флажком)
         showAxisMenuItem.setSelected(true);
 
-
         // Повторить действия для элемента "Показывать маркеры точек"
         Action showMarkersAction = new AbstractAction("Показывать маркеры точек") {
         public void actionPerformed(ActionEvent event) {
@@ -102,16 +108,32 @@ public class MainFrame extends JFrame{
         showMarkersMenuItem = new JCheckBoxMenuItem(showMarkersAction);
         graphicsMenu.add(showMarkersMenuItem);
         // Элемент по умолчанию выключен
-        showMarkersMenuItem.setSelected(false);
+        showMarkersMenuItem.setSelected(true);
         // Зарегистрировать обработчик событий, связанных с меню "График"
         graphicsMenu.addMenuListener(new GraphicsMenuListener());
+
+        Action addGraphicsAction = new AbstractAction("Добавить функцию") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (fileChooser==null) {
+                    fileChooser = new JFileChooser();
+                    fileChooser.setCurrentDirectory(new File("."));
+                }
+                if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
+                    openGraphics(fileChooser.getSelectedFile(), "ДОБАВЛЕНИЕ ВТОРОГО ГРАФИКА");
+            }
+        };
+        addGraphicsMenuItem = new JMenuItem(addGraphicsAction);
+        graphicsMenu.add(addGraphicsMenuItem);
+        addGraphicsMenuItem.setEnabled(false);
 
         // Установить GraphicsDisplay в цент граничной компоновки
         getContentPane().add(display, BorderLayout.CENTER);
     }
 
+
     // Считывание данных графика из существующего файла
-    protected void openGraphics(File selectedFile) {
+    protected void openGraphics(File selectedFile, String options) {
         try {
             // Шаг 1 - Открыть поток чтения данных, связанный с файлом
             DataInputStream in = new DataInputStream(
@@ -140,7 +162,14 @@ public class MainFrame extends JFrame{
                 // Да - установить флаг загруженности данных
                 fileLoaded = true;
                 // Вызывать метод отображения графика
-                display.showGraphics(graphicsData);
+                if(options.equals("СОЗДАНИЕ ГРАФИКА")) {
+                    display.showGraphics(graphicsData);
+                    amountOfLoadedGraphics = 1;
+                }
+                else if(options.equals("ДОБАВЛЕНИЕ ВТОРОГО ГРАФИКА")) {
+                    display.addNewAndShowGraphics(graphicsData);
+                    amountOfLoadedGraphics++;
+                }
             }
             // Шаг 5 - Закрыть входной поток
             in.close();
