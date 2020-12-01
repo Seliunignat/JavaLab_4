@@ -1,5 +1,7 @@
 package bsu.rfe.java.group10.lab4.SELIUN.var3C;
 
+import sun.awt.HeadlessToolkit;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -32,6 +34,9 @@ public class GraphicsDisplay extends JPanel
     // Флаговые переменные, задающие правила отображения графика
     private boolean showAxis = true;
     private boolean showMarkers = true;
+
+    private boolean rotation = false;
+    private static double ANGLE = 90;
 
 
     // Методы-модификаторы для изменения параметров отображения графика
@@ -115,8 +120,7 @@ public class GraphicsDisplay extends JPanel
         GeneralPath graphics = new GeneralPath();
         for (int i=0; i<graphicsData.length; i++) {
         // Преобразовать значения (x,y) в точку на экране point
-            Point2D.Double point = xyToPoint(graphicsData[i][0],
-                    graphicsData[i][1]);
+            Point2D.Double point = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
             if (i>0) {
             // Не первая итерация – вести линию в точку point
                 graphics.lineTo(point.getX(), point.getY());
@@ -166,7 +170,7 @@ public class GraphicsDisplay extends JPanel
         // характеристик устройства (экрана)
         FontRenderContext context = canvas.getFontRenderContext();
         // Шаг 2 - Определить, должна ли быть видна ось Y на графике
-        if (minX<=0.0 && maxX>=0.0) {
+        if (minX <= 0.0 && maxX >= 0.0) {
             // Она видна, если левая граница показываемой области minX<=0.0,
             // а правая (maxX) >= 0.0
             // Шаг 2а - ось Y - это линия между точками (0, maxY) и (0, minY)
@@ -179,11 +183,11 @@ public class GraphicsDisplay extends JPanel
             arrow.moveTo(lineEnd.getX(), lineEnd.getY());
             // Вести левый "скат" стрелки в точку с относительными
             // координатами (5,20)
-            arrow.lineTo(arrow.getCurrentPoint().getX()+5,
-                    arrow.getCurrentPoint().getY()+20);
+            arrow.lineTo(arrow.getCurrentPoint().getX() + 5,
+                    arrow.getCurrentPoint().getY() + 20);
             // Вести нижнюю часть стрелки в точку с относительными
             // координатами (-10, 0)
-            arrow.lineTo(arrow.getCurrentPoint().getX()-10,
+            arrow.lineTo(arrow.getCurrentPoint().getX() - 10,
                     arrow.getCurrentPoint().getY());
             // Замкнуть треугольник стрелки
             arrow.closePath();
@@ -194,11 +198,12 @@ public class GraphicsDisplay extends JPanel
             Rectangle2D bounds = axisFont.getStringBounds("y", context);
             Point2D.Double labelPos = xyToPoint(0, maxY);
             // Вывести надпись в точке с вычисленными координатами
-            canvas.drawString("y", (float)labelPos.getX() + 10,
-                    (float)(labelPos.getY() - bounds.getY()));
+            canvas.drawString("y", (float) labelPos.getX() + 10,
+                    (float) (labelPos.getY() - bounds.getY()));
+            //System.out.println("Y axis drawed");
         }
         // Шаг 3 - Определить, должна ли быть видна ось X на графике
-        if (minY<=0.0 && maxY>=0.0) {
+        if (minY <= 0.0 && maxY >= 0.0) {
             // Она видна, если верхняя граница показываемой области max)>=0.0,
             // а нижняя (minY) <= 0.0
             // Шаг 3а - ось X - это линия между точками (minX, 0) и (maxX, 0)
@@ -211,12 +216,12 @@ public class GraphicsDisplay extends JPanel
             arrow.moveTo(lineEnd.getX(), lineEnd.getY());
             // Вести верхний "скат" стрелки в точку с относительными
             // координатами (-20,-5)
-            arrow.lineTo(arrow.getCurrentPoint().getX()-20,
-                    arrow.getCurrentPoint().getY()-5);
+            arrow.lineTo(arrow.getCurrentPoint().getX() - 20,
+                    arrow.getCurrentPoint().getY() - 5);
             // Вести левую часть стрелки в точку
             // с относительными координатами (0, 10)
             arrow.lineTo(arrow.getCurrentPoint().getX(),
-                    arrow.getCurrentPoint().getY()+10);
+                    arrow.getCurrentPoint().getY() + 10);
             // Замкнуть треугольник стрелки
             arrow.closePath();
             canvas.draw(arrow); // Нарисовать стрелку
@@ -227,8 +232,9 @@ public class GraphicsDisplay extends JPanel
             Point2D.Double labelPos = xyToPoint(maxX, 0);
             // Вывести надпись в точке с вычисленными координатами
             canvas.drawString("x",
-                    (float)(labelPos.getX()-bounds.getWidth()-10),
-                    (float)(labelPos.getY() + bounds.getY()));
+                    (float) (labelPos.getX() - bounds.getWidth() - 10),
+                    (float) (labelPos.getY() + bounds.getY()));
+            //System.out.println("X axis drawed");
         }
     }
 
@@ -364,8 +370,20 @@ public class GraphicsDisplay extends JPanel
         }
         /* Шаг 4 - Определить (исходя из размеров окна) масштабы по осям X и Y –
         сколько пикселов приходится на единицу длины по X и по Y */
-        double scaleX = getSize().getWidth() / (maxX - minX);
-        double scaleY = getSize().getHeight() / (maxY - minY);
+        double scaleX;
+        double scaleY;
+        if(!rotation)
+        {
+            //System.out.println(getSize().getWidth() + " x " + getSize().getHeight());
+
+            scaleX = getSize().getWidth() / (maxX - minX);
+            scaleY = getSize().getHeight() / (maxY - minY);
+        }
+        else
+        {
+            scaleX = getSize().getHeight() / (maxX - minX);
+            scaleY = getSize().getWidth() / (maxY - minY);
+        }
         // Выбрать единый масштаб как минимальный из двух
         scale = Math.min(scaleX, scaleY);
         // Шаг 5 - корректировка границ области согласно выбранному масштабу
@@ -377,18 +395,40 @@ public class GraphicsDisplay extends JPanel
             getSize().getHeight()/scale;
             2) Вычтем из этого значения сколько делений требовалось изначально;
             3) Набросим по половине недостающего расстояния на maxY и minY */
-            double yIncrement = (getSize().getHeight()/scale-(maxY-minY))/2;
+            double yIncrement;
+            if (!rotation)
+                yIncrement = (getSize().getHeight()/scale - (maxY - minY)) / 2;
+            else
+                yIncrement = (getSize().getWidth()/scale - (maxY - minY)) / 2;
+
             maxY += yIncrement;
             minY -= yIncrement;
+            //System.out.println("Choosed scaleX");
         }
         if (scale==scaleY) {
             // Если за основу был взят масштаб по оси Y, действовать по аналогии
-            double xIncrement = (getSize().getWidth()/scale-(maxX-minX))/2;
+            double xIncrement;
+            if(!rotation)
+                xIncrement = (getSize().getWidth()/scale-(maxX-minX))/2;
+            else
+                xIncrement = (getSize().getHeight()/scale-(maxX-minX))/2;
             maxX += xIncrement;
             minX -= xIncrement;
+
+            //System.out.println("Choosed scaleY");
         }
         // Шаг 5 – Преобразовать экземпляр Graphics к Graphics2D
         Graphics2D canvas = (Graphics2D) g;
+        if(rotation)
+        {
+            canvas.translate(0, getSize().getHeight());
+            canvas.rotate(Math.toRadians(-ANGLE));
+        }
+        else
+        {
+            //canvas.translate(0,0);
+            //canvas.rotate(Math.toRadians(ANGLE));
+        }
         // Шаг 6 - Сохранить текущие настройки холста
         Stroke oldStroke = canvas.getStroke();
         Color oldColor = canvas.getColor();
@@ -410,4 +450,11 @@ public class GraphicsDisplay extends JPanel
         canvas.setStroke(oldStroke);
     }
 
+    public boolean isEnabledRotation() {
+        return rotation;
+    }
+
+    public void setRotation(boolean rotation) {
+        this.rotation = rotation;
+    }
 }

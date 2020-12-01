@@ -18,6 +18,7 @@ public class MainFrame extends JFrame{
     private JCheckBoxMenuItem showAxisMenuItem;
     private JCheckBoxMenuItem showMarkersMenuItem;
     private JMenuItem addGraphicsMenuItem;
+    private JCheckBoxMenuItem rotateMenuItem;
     // Компонент-отображатель графика
     private GraphicsDisplay display = new GraphicsDisplay();
     // Флаг, указывающий на загруженность данных графика
@@ -31,6 +32,7 @@ public class MainFrame extends JFrame{
         // Доступность или недоступность элементов меню "График" определяется загруженностью данных
             showAxisMenuItem.setEnabled(fileLoaded);
             showMarkersMenuItem.setEnabled(fileLoaded);
+            rotateMenuItem.setEnabled(fileLoaded);
             if(amountOfLoadedGraphics > 0 && amountOfLoadedGraphics < 2)
                 addGraphicsMenuItem.setEnabled(true);
             else
@@ -112,6 +114,18 @@ public class MainFrame extends JFrame{
         // Зарегистрировать обработчик событий, связанных с меню "График"
         graphicsMenu.addMenuListener(new GraphicsMenuListener());
 
+        Action rotateAction = new AbstractAction("Повернуть") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                display.setRotation(rotateMenuItem.isSelected());
+                repaint();
+            }
+        };
+        rotateMenuItem = new JCheckBoxMenuItem(rotateAction);
+        graphicsMenu.add(rotateMenuItem);
+        rotateMenuItem.setEnabled(true);
+        rotateMenuItem.setSelected(false);
+
         Action addGraphicsAction = new AbstractAction("Добавить функцию") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -188,8 +202,9 @@ public class MainFrame extends JFrame{
                     "Ошибка загрузки данных", JOptionPane.WARNING_MESSAGE);
             return;
         }
-    }
 
+
+    }
 
     public static void main(String[] args) {
     // Создать и показать экземпляр главного окна приложения
